@@ -1,0 +1,25 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+table {
+  width: 640px;
+  height: 640px;
+  margin: 0px;
+  padding: 0px;
+  border-collapse:collapse;
+}
+tr.def {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+tr.def td{
+  border: solid #A9B3CD; /* 设置边框属性；样式(solid=实线)、颜色(#999=灰) */
+  border-width: 1px 1px 1px 1px; /* 设置边框状粗细：上 右 下 左 = 对应：1px 0 0 1px */
+
+}
