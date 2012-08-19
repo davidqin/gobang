@@ -1,1 +1,15 @@
-test
+设计
+MVC的结构
+
+M为lib下的各个类
+Game
+Room
+Player
+
+C为server的代码
+工作流程是：
+  接到了请求后，获取信息，调用相关model的函数，然后发送信息，逻辑不关心。
+
+逻辑写到model中，model就避免不了有socket.emit的调用。暂时没有更好的方案，暂时先这样
+
+V在public中

@@ -10,6 +10,9 @@ class Game
         return true if @gameMap[i][j] == number && @checkWin i,j,number
     false
 
+  putPiece: (x, y, position) ->
+
+
   checkWin: (i,j,number) ->
     if j + 4 <= 15
       return true if @abc(i,j,0,1,number)

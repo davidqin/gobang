@@ -1,9 +1,17 @@
 class Player
-  constructor: (id, name, token, socket) ->
-    @id     = id
-    @name   = name
-    @token  = token
-    @socket = socket
+  constructor: (nickname, socket, status, roomId, position) ->
+    @nickname = nickname
+    @socket   = socket
+    @status   = status
+    @roomId   = roomId
+    @position = position
+
+  playerInfo: ->
+    "socketId" : @socket.id
+    "nickname" : @nickname,
+    "status"   : @status
+    "roomId"   : @roomId
+    "position" : @position
     # socket.on("cueBall", function(data) {
     #   console.log(data);
     #   currentPlayer = data.playerid;

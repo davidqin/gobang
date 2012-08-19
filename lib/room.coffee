@@ -1,60 +1,66 @@
 {Player} = require './player'
 {Game}   = require './game'
 
-createPlayerToken = (i) ->
-  return "player token of player No." + i
-
 class Room
-  constructor: (index, token) ->
-    @index    = index
-    @token    = token
-    @status   = 0
+  constructor: (id) ->
+    @id       = id
     @turn     = 1
     @socket   = null
     @player_1 = null
     @player_2 = null
     @game     = null
+    @watchers  = []
+    #when a player enter a room ,he is considered as a person.
+    #                            he is considered as a player when he join the game.
+  addWatcher: (watcher) ->
+    @watchers.push watcher
+
+  removePerson: (watcher) ->
+
+  reSendPersonList: ->
+
+  addPerson: (person) ->
+    if 0 <= room.players() < 2
+      userInfo = room.addPlayer(player)
+    else
+      userInfo = room.addWatcher(player)
+
   players: ->
     i = 0
-    i++ if @player_1
-    i++ if @player_2
+    i++ if @player_1 != null
+    i++ if @player_2 != null
     i
-  addPlayer: (player) ->
-    if !@player_1
-      @player_1 = player
-      return
-    if !@player_2
-      @player_2 = player
   removePlayer: (playerId) ->
     player = null
-    if @player_1 && @player_1.id.toString() == playerId
-      player = @player_1
-      @player_1 = null
-    else if @player_2 && @player_2.id.toString() == playerId
+    console.log playerId
+    if playerId == '1'
+      player       = @player_1
+      @player_1    = @player_2
+      @player_1.id = 1
+      @player_2    = null
+    else
       player = @player_2
       @player_2 = null
     player
 
-  checkOut: (playerid, playerToken) ->
-    player = @removePlayer playerid
-    @status--
+  checkOut: (playerId) ->
+    player = @removePlayer playerId
     player.socket.emit "checkOut", date: "success"
 
   checkIn: (playerName, socket) ->
     console.log "checkIn player: " + playerName
-    if @status < 2
-      playerToken = createPlayerToken @players()
-      @addPlayer new Player(@players() + 1, playerName, playerToken, socket)
-      @status++
-      roomReady = false
-      roomReady = true if @status == 2
-      data = roomId: @index,roomToken: @token, roomReady: roomReady, playerid: @players(), playerToken: playerToken
-      socket.emit("checkIn", data);
+    if !@player_1
+      @player_1 = new Player(1, playerName, socket)
+    else
+      @player_2 = new Player(2, playerName, socket)
 
-    if @status == 2
+    socket.emit "checkIn", roomId: @index, playerId: @players()
+
+    if @players() == 2
       @gameStart()
 
   gameStart: ->
+    @turn     = 1
     @player_1.socket.emit 'gameStart', roomId: @index, playerId: 1
     @player_2.socket.emit 'gameStart', roomId: @index, playerId: 2
 

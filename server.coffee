@@ -2,16 +2,16 @@ express      = require 'express'
 routes       = require './routes'
 http         = require 'http'
 path         = require 'path'
-io           = require 'socket.io'
 connect      = require('connect')
-Session      = require('connect').middleware.session.Session
+#Session      = require('connect').middleware.session.Session
 cookie       = require('cookie')
 {Room}       = require './lib/room'
-sessionStore = new express.session.MemoryStore({reapInterval: 60000 * 10});
+{Player}     = require './lib/player'
+#sessionStore = new express.session.MemoryStore({reapInterval: 60000 * 10});
 app = express()
 
 app.configure ->
-  app.set 'port', process.env.PORT || 3001
+  app.set 'port', process.env.PORT || 1234
   app.set 'views', __dirname + '/views'
   app.set 'view engine', 'jade'
   app.use express.favicon()
@@ -19,8 +19,8 @@ app.configure ->
   app.use express.bodyParser()
   app.use express.methodOverride()
 
-  app.use express.cookieParser()
-  app.use express.session(secret: 'davidqhr', key: 'express.sid', store:sessionStore)
+#  app.use express.cookieParser()
+#  app.use express.session(secret: 'davidqhr', key: 'express.sid', store:sessionStore)
 
   app.use app.router
   app.use express.static path.join __dirname, 'public'
@@ -35,84 +35,125 @@ app.get '/game', routes.game
 server = http.createServer(app).listen app.get('port'), ->
   console.log "Express server listening on port " + app.get('port')
 
-rooms = []
-roomMax = 5
+roomMax      = 5
+Rooms        = []
 
-roomList = ->
+ClientsCount = 0
+Connectors   = [] #用户管理
+
+io           = null
+
+#获取用户信息
+GetUserInfo = (socketId) ->
+  Connectors[socketId].playerInfo()
+
+OnLogin = (data) ->
+  #data.nickname
+  ret = 0
+  socketId = this.id
+  player = new Player(data.nickname,    this,      0,     -1,       -1)
+                    #(      nickname, socket, status, roomId, position)
+  #更新客户端链接
+  Connectors[socketId] = player
+  ClientsCount++
+
+  #登陆成功
+  this.emit "loginSuccess",
+    #ret     : 1
+    userInfo: GetUserInfo(socketId)
+
+  io.sockets.emit "roomList", roomList: getroomList()
+
+OnJoinRoom = (data) ->
+  #data.roomId
+  roomId   = data.roomId
+  room     = Rooms[roomId]
+  socketId = this.id
+  player   = Connectors[socketId]
+  player.roomId = roomId
+
+  room.addPerson(player)
+
+  this.emit "joinRoomSuccess",
+    "roomId"   : roomId
+    "userInfo" : userInfo
+
+  io.sockets.emit "roomList", roomList: getroomList()
+  room.reSendPersonList()
+
+OnLeaveRoom = (data) ->
+  #null
+  socketId      = this.id
+  player        = Connectors[socketId]
+  room          = Rooms[player.roomId]
+  player.roomId = -1
+
+  room.removePerson(player)
+  this.emit "leaveRoomSuccess"
+  room.reSendPersonList()
+
+OnReady = (data) ->
+  #null
+  socketId      = this.id
+  player        = Connectors[socketId]
+  room          = Rooms[player.roomId]
+
+  room.playerReady(player)
+
+OnPutPiece = (data) ->
+  #data.x
+  #data.y
+  socketId      = this.id
+  player        = Connectors[socketId]
+  room          = Rooms[player.roomId]
+
+  room.game.putPiece(data.x, data.y, player.position)
+
+getroomList = ->
   list = []
 
-  for room in rooms
-    list.push id: room.index, status: room.status
+  for room in Rooms
+    list.push id: room.index, players: room.players()
   list
 
-createToken = (i) ->
-  return "room token of room No." + i
-
-initRooms = (callback) ->
+initRooms = ->
   for i in [0...5] #  0 <= i < roomMax
-    token = createToken(i)
-    rooms[i] = new Room(i, token)
-  callback()
+    Rooms[i] = new Room(i)
 
-initRooms ->
+startServer = ->
+  initRooms()
   io = require('socket.io').listen server
   io.sockets.on 'connection', (socket) ->
-    socket.on "roomList", (data) ->
-      socket.emit "roomList", roomList: roomList()
 
-    socket.on "checkIn", (data) ->
-      roomIndex  = data.roomId
-      room       = rooms[roomIndex]
-      playerName = data.playerName
+    socket.on "OnLogin",     OnLogin
+    socket.on "OnJoinRoom",  OnJoinRoom
+    socket.on "OnLeaveRoom", OnLeaveRoom
+    socket.on "OnReady",     OnReady
+    socket.on "OnPutPiece",  OnPutPiece
 
-      if room.status < 2
-        room.checkIn(playerName, socket)
+startServer()
 
-      io.sockets.emit 'roomList', roomList: roomList()
 
-    socket.on "checkOut", (data) ->
-      roomIndex   = data.roomId
-      room        = rooms[roomIndex]
-      playerId    = data.playerId
-      playerToken = data.playerToken
+#断开
+# socket.on("disconnect", OnClose);
 
-      if room.status > 0
-        room.checkOut(playerId, playerToken)
+# #登陆
+# socket.on("login", OnLogin);
 
-      io.sockets.emit 'roomList', roomList: roomList()
+# #加入房间
+# socket.on("joinRoom", OnJoinRoom);
 
-    socket.on 'click_info', (data) ->
-      roomIndex   = data.roomId
-      room        = rooms[roomIndex]
-      playerId    = data.playerId
-      anotherId   = 3 - playerId
+# #离开房间
+# socket.on("leaveRoom", OnLeaveRoom);
 
-      return if room.turn != playerId
-      row = data.row
-      col = data.col
-      return if room.game.gameMap[row][col] != 0
-      room.game.gameMap[row][col] = playerId
+# #准备
+# socket.on("ready", OnReady);
 
-      room.turn = anotherId
+# #消息
+# socket.on('message', OnMessage);
 
-      color = "#00FF00"
-      color = "#0000FF" if playerId == 1
-
-      room.player_1.socket.emit 'click_success', row: row, col: col, color: color
-      room.player_2.socket.emit 'click_success', row: row, col: col, color: color
-
-      if room.game.win(playerId)
-        winner = null
-        loser  = null
-        if playerId == 1
-          winner = room.player_1
-          loser = room.player_2
-        else
-          winner = room.player_2
-          loser = room.player_1
-        winner.socket.emit 'win'
-        loser.socket.emit 'lose'
-
+# #落子
+# socket.on("drawChess", OnDrawChess);
 
 
 
