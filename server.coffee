@@ -1,13 +1,11 @@
 express      = require 'express'
-routes       = require './routes'
 http         = require 'http'
+routes       = require './routes'
 path         = require 'path'
 connect      = require('connect')
-#Session      = require('connect').middleware.session.Session
-cookie       = require('cookie')
 {Room}       = require './lib/room'
 {Player}     = require './lib/player'
-#sessionStore = new express.session.MemoryStore({reapInterval: 60000 * 10});
+
 app = express()
 
 app.configure ->
@@ -18,9 +16,6 @@ app.configure ->
   app.use express.logger('dev')
   app.use express.bodyParser()
   app.use express.methodOverride()
-
-#  app.use express.cookieParser()
-#  app.use express.session(secret: 'davidqhr', key: 'express.sid', store:sessionStore)
 
   app.use app.router
   app.use express.static path.join __dirname, 'public'
@@ -67,10 +62,10 @@ OnLogin = (data) ->
 
 OnJoinRoom = (data) ->
   #data.roomId
-  roomId   = data.roomId
-  room     = Rooms[roomId]
-  socketId = this.id
-  player   = Connectors[socketId]
+  roomId        = data.roomId
+  room          = Rooms[roomId]
+  socketId      = this.id
+  player        = Connectors[socketId]
   player.roomId = roomId
 
   position = room.addPerson(player)
@@ -107,6 +102,10 @@ OnReady = (data) ->
   room.playerReady(player)
   room.reFreshRoomStatus()
 
+  if room.gameReady()
+    room.gameStart()
+    io.sockets.emit "roomList", roomList: getRoomList()
+
 OnPutPiece = (data) ->
   #data.x
   #data.y
@@ -128,6 +127,7 @@ OnPutPiece = (data) ->
   else
     room.turn = 3 - room.turn
     room.noticeEveryOne "putPiece", x:data.x, y:data.y, position:player.position
+
 getRoomList = ->
   list = []
 
@@ -151,48 +151,3 @@ startServer = ->
     socket.on "OnPutPiece",  OnPutPiece
 
 startServer()
-
-
-#断开
-# socket.on("disconnect", OnClose);
-
-# #登陆
-# socket.on("login", OnLogin);
-
-# #加入房间
-# socket.on("joinRoom", OnJoinRoom);
-
-# #离开房间
-# socket.on("leaveRoom", OnLeaveRoom);
-
-# #准备
-# socket.on("ready", OnReady);
-
-# #消息
-# socket.on('message', OnMessage);
-
-# #落子
-# socket.on("drawChess", OnDrawChess);
-
-
-
-   # script(type="text/coffeescript", src='/javascripts/game.coffee')
-
-
-# socket.set 'authorization', (data, callback) ->
-#   if !data.headers.cookie
-#     callback 'nosession', false
-
-#   signedCookies = cookie.parse data.headers.cookie
-#   data.cookies  = connect.utils.parseSignedCookies signedCookies, 'davidqhr'
-#   #console.log data
-#   sessionStore.get data.cookies['express.sid'], (error, session) ->
-#     if error || !session
-#       callback 'socket.io: no found session.', false
-
-#     data.session = session
-#     #console.log session
-#     if data.session
-#       callback null, true
-#     else
-#       callback 'socket.io: no found session.user', false

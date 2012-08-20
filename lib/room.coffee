@@ -6,7 +6,6 @@ class Room
     @id       = id
     @turn     = 1
     @status   = 0
-    @socket   = null
     @player_1 = null
     @player_2 = null
     @game     = null
@@ -17,9 +16,6 @@ class Room
   playerReady: (player) ->
     player.status = 1
     player.socket.emit "readySuccess"
-
-    if @player_2.status == 1 && @player_1.status == 1
-      @gameStart()
 
   roomStatus: ->
     p1_n = null
@@ -40,6 +36,16 @@ class Room
 
   reFreshRoomStatus: ->
     @noticeEveryOne "roomStatus", @roomStatus()
+
+  gameReady: ->
+    @player_2.status == 1 && @player_1.status == 1
+
+  noticeEveryOne: (actionName,json) ->
+    @player_1.socket.emit actionName, json if @player_1
+    @player_2.socket.emit actionName, json if @player_2
+
+    for watcher in @watchers
+      watcher.socket.emit actionName, json
 
   addPlayer: (player) ->
     if @player_1 == null
@@ -71,13 +77,6 @@ class Room
     i++ if @player_2 != null
     i
 
-  noticeEveryOne: (actionName,json) ->
-    @player_1.socket.emit actionName, json if @player_1
-    @player_2.socket.emit actionName, json if @player_2
-
-    for watcher in @watchers
-      watcher.socket.emit actionName, json
-
   removePlayer: (playerId) ->
     player = null
     if playerId == '1'
@@ -97,7 +96,7 @@ class Room
   gameStart: ->
     @turn     = 1
     @status   = 1
+    @game     = new Game
     @noticeEveryOne 'gameStart'
-    @game = new Game
 
 exports.Room = Room

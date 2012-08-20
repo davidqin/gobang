@@ -1,20 +1,19 @@
 extends layout
 block content
   script(type="text/coffeescript", src='/javascripts/index.coffee')
-  div(id="main")
-    div(id="left")
-      div(id="player_1")
-      hr
-      div(id="player_2")
-    div(id="right")
-      div(id="notice")
-      div(id="roomList")
-      div(id="gamePool")
-      div(id="dlgBg")
-      div(id="login")
-        h1 登陆
-        div(class="box")
-          input(type="text",id="nickname",maxlength="10",class="in")
-          input(type="button",id="loginBtn",class="go",value="加入游戏")
-    div(id="ready")
-      button(class="button") READY
+  div(class="container-fluid")
+    div(class="row-fluid")
+      div(class="span3")
+        div(id="player_1") asdfasdfasdf
+        div(id="player_2") asdfasdfsadf
+      div(class="span9")
+        div(id="notice")
+        div(id="roomList")
+        div(id="gamePool")
+        div(id="dlgBg")
+        div(id="login",class="well form-inline")
+          h3 Nickname:
+          input(type="text",maxlength="10",id="nickname")
+          button(id="loginBtn",class="btn btn-success") Join
+      div(id="ready")
+        button(class="button") READY

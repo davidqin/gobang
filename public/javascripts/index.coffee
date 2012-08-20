@@ -3,28 +3,8 @@ $(document).ready ->
 
   $("#ready").hide()
 
-  LogData = (data) ->
-    console.log data
-
-  initRoomList = (list) ->
-    html = ""
-    for room in list
-      html += "<div roomId=\"#{room.id}\" class=\"button\"><p> Room index :#{room.id}, status :#{room.status}</p></div>"
-    html += ''
-    $('#roomList').html(html)
-
   $("div[roomId]").live 'click', ->
     socket.emit 'OnJoinRoom', roomId: $(this).attr('roomId')
-
-
-    #g_Info.id       = data.info.id
-    #g_Info.nickname = data.info.nickname
-    #g_Info.status   = data.info.status
-    #initUserList(data.list)
-
-  #socket.on 'loginSuccess', LogData
-
-  #socket.on 'roomList', LogData
 
   $("#dlgBg").css
     width  : $(document).width()
@@ -50,7 +30,7 @@ $(document).ready ->
   loginSuccess = (data) ->
     $("#dlgBg").remove()
     $("#login").remove()
-    initRoomList(data.roomList)
+    drawRoomList(data.roomList)
 
   readySuccess = (data) ->
     $("#ready").hide()
@@ -95,11 +75,25 @@ $(document).ready ->
   gameOver = (data) ->
     $("#ready").show()
 
+  joinRoomFailed = ->
+
+  drawRoomList = (list) ->
+    html = ""
+    for room in list
+      html += "<div roomId=\"#{room.id}\" class=\"button\"><p> Room index :#{room.id}, status :#{room.status}</p></div>"
+    html += ''
+    $('#roomList').html(html)
+
+  reLoadRoomList = (data) ->
+    drawRoomList(data.roomList)
+
   initOnAction = (socket) ->
     socket.on 'loginSuccess',    loginSuccess
+    socket.on 'roomList',        reLoadRoomList
     socket.on 'joinRoomSuccess', joinRoomSuccess
     socket.on 'readySuccess',    readySuccess
     socket.on 'roomStatus',      changeRoomStatus
     socket.on 'gameStart',       gameStart
     socket.on 'putPiece',        drawPiece
     socket.on 'gameOver',        gameOver
+    socket.on 'joinRoomFailed',  joinRoomFailed
