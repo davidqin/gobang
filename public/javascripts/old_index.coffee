@@ -52,7 +52,7 @@ $(document).ready ->
   socket.on "click_success", (data) ->
     row = data.row
     col = data.col
-    $("td[row=#{row}][col=#{col}]").css("background-color","#{data.color}")
+    $("td[row=#{row}][col=#{col}]").css("background-image","url(/images/#{data.position}.jpg)")
 
   socket.on "win", (data) ->
     alert "you win!"

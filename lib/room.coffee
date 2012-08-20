@@ -5,34 +5,81 @@ class Room
   constructor: (id) ->
     @id       = id
     @turn     = 1
+    @status   = 0
     @socket   = null
     @player_1 = null
     @player_2 = null
     @game     = null
     @watchers  = []
-    #when a player enter a room ,he is considered as a person.
-    #                            he is considered as a player when he join the game.
-  addWatcher: (watcher) ->
-    @watchers.push watcher
 
   removePerson: (watcher) ->
 
-  reSendPersonList: ->
+  playerReady: (player) ->
+    player.status = 1
+    player.socket.emit "readySuccess"
 
-  addPerson: (person) ->
-    if 0 <= room.players() < 2
-      userInfo = room.addPlayer(player)
+    if @player_2.status == 1 && @player_1.status == 1
+      @gameStart()
+
+  roomStatus: ->
+    p1_n = null
+    p1_n = @player_1.nickname if @player_1
+    p2_n = null
+    p2_n = @player_2.nickname if @player_2
+    p1_s = null
+    p1_s = @player_1.status   if @player_1
+    p2_s = null
+    p2_s = @player_2.status   if @player_2
+    status =
+      p1_name   : p1_n
+      p2_name   : p2_n
+      p1_status : p1_s
+      p2_status : p2_s
+      game      : @game
+      turn      : @turn
+
+  reFreshRoomStatus: ->
+    @noticeEveryOne "roomStatus", @roomStatus()
+
+  addPlayer: (player) ->
+    if @player_1 == null
+      @player_1 = player
+      return 1
+    else if @player_2 == null
+      @player_2 = player
+      return 2
+    -1
+
+  addWatcher: (watcher) ->
+    @watchers.push watcher
+    return 0
+
+  addPerson: (player) ->
+    if 0 <= @players() < 2
+      position = @addPlayer(player)
     else
-      userInfo = room.addWatcher(player)
+      position = @addWatcher(player)
+
+    return position if position == -1
+    player.position = position
+    player.roomId   = @id
+    position
 
   players: ->
     i = 0
     i++ if @player_1 != null
     i++ if @player_2 != null
     i
+
+  noticeEveryOne: (actionName,json) ->
+    @player_1.socket.emit actionName, json if @player_1
+    @player_2.socket.emit actionName, json if @player_2
+
+    for watcher in @watchers
+      watcher.socket.emit actionName, json
+
   removePlayer: (playerId) ->
     player = null
-    console.log playerId
     if playerId == '1'
       player       = @player_1
       @player_1    = @player_2
@@ -47,26 +94,10 @@ class Room
     player = @removePlayer playerId
     player.socket.emit "checkOut", date: "success"
 
-  checkIn: (playerName, socket) ->
-    console.log "checkIn player: " + playerName
-    if !@player_1
-      @player_1 = new Player(1, playerName, socket)
-    else
-      @player_2 = new Player(2, playerName, socket)
-
-    socket.emit "checkIn", roomId: @index, playerId: @players()
-
-    if @players() == 2
-      @gameStart()
-
   gameStart: ->
     @turn     = 1
-    @player_1.socket.emit 'gameStart', roomId: @index, playerId: 1
-    @player_2.socket.emit 'gameStart', roomId: @index, playerId: 2
-
-    socket_1 = @player_1.socket
-    socket_2 = @player_2.socket
-
+    @status   = 1
+    @noticeEveryOne 'gameStart'
     @game = new Game
 
 exports.Room = Room

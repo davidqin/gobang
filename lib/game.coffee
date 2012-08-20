@@ -7,29 +7,26 @@ class Game
   win: (number) ->
     for i in [1..15]
       for j in [1..15]
-        return true if @gameMap[i][j] == number && @checkWin i,j,number
+        return true if @checkWin i,j,number
     false
-
-  putPiece: (x, y, position) ->
-
 
   checkWin: (i,j,number) ->
     if j + 4 <= 15
-      return true if @abc(i,j,0,1,number)
+      return true if @five(i,j,0,1,number)
 
     if j - 4 >= 1 and i + 4 <=15
-      return true if @abc(i,j,1,-1,number)
+      return true if @five(i,j,1,-1,number)
 
     if i + 4 <= 15
-      return true if @abc(i,j,1,0,number)
+      return true if @five(i,j,1,0,number)
 
     if i + 4 <= 15 and j + 4 <= 15
-      return true if @abc(i,j,1,1,number)
+      return true if @five(i,j,1,1,number)
 
     false
 
-  abc: (i,j,d_i,d_j,num) ->
-    if @gameMap[i + d_i][j + d_j] == num and @gameMap[i + d_i * 2][j + d_j * 2] == num and @gameMap[i + d_i * 3][j + d_j * 3] == num and @gameMap[i + d_i * 4][j + d_j * 4] == num
+  five: (i,j,d_i,d_j,num) ->
+    if @gameMap[i][j] == num and @gameMap[i + d_i][j + d_j] == num and @gameMap[i + d_i * 2][j + d_j * 2] == num and @gameMap[i + d_i * 3][j + d_j * 3] == num and @gameMap[i + d_i * 4][j + d_j * 4] == num
       return true
     else
       return false

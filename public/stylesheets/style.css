@@ -8,18 +8,87 @@ a {
 }
 
 table {
-  width: 640px;
-  height: 640px;
+  width: 525px;
+  height: 525px;
   margin: 0px;
   padding: 0px;
   border-collapse:collapse;
 }
+
+#main {
+ float: left;
+ height: auto;
+ width: auto;
+}
+
+#left {
+ float: left;
+ width: 300px;
+ border: 1px solid #00FF00;
+}
+#right {
+ margin-left: 30px;
+ float: right;
+ min-width: 535px;
+ border: 1px solid #0000FF;
+}
+
+#gamePool {
+  width: 525px;
+  height: 525px;
+  padding: 5px;
+  background-image:url(/images/bg.jpg);
+}
+
 tr.def {
   padding-top: 2px;
   padding-bottom: 2px;
 }
 tr.def td{
-  border: solid #A9B3CD; /* 设置边框属性；样式(solid=实线)、颜色(#999=灰) */
   border-width: 1px 1px 1px 1px; /* 设置边框状粗细：上 右 下 左 = 对应：1px 0 0 1px */
-
+  background-size: 100%;
 }
+
+#login{width:350px;border:1px solid #CCC;background:#F7F7F7;position: absolute;left:0;top:0;
+  z-index:1000;}
+  #login h1{padding-left:10px;line-height:25px;}
+  #login .box{margin:5px;background:#FFF;padding:20px}
+  #login .in{height:25px;border:1px solid #CCC;line-height:25px;width:200px}
+  #login .go{height:25px;border:1px solid #CCC;width:80px;line-height:25px}
+
+  /*背景*/
+  #dlgBg{width:100%;height:100%;background:#000;position: absolute;left:0;top:0;z-index:998;
+    filter:alpha(opacity=50);-moz-opacity:0.5;-khtml-opacity: 0.5;opacity: 0.5;}
+
+    .button {
+     margin-top: 10px;
+     border-top: 1px solid #96d1f8;
+     background: #627a8a;
+     background: -webkit-gradient(linear, left top, left bottom, from(#3e779d), to(#627a8a));
+     background: -webkit-linear-gradient(top, #3e779d, #627a8a);
+     background: -moz-linear-gradient(top, #3e779d, #627a8a);
+     background: -ms-linear-gradient(top, #3e779d, #627a8a);
+     background: -o-linear-gradient(top, #3e779d, #627a8a);
+     padding: 9px 18px;
+     -webkit-border-radius: 18px;
+     -moz-border-radius: 18px;
+     border-radius: 18px;
+     -webkit-box-shadow: rgba(0,0,0,1) 0 1px 0;
+     -moz-box-shadow: rgba(0,0,0,1) 0 1px 0;
+     box-shadow: rgba(0,0,0,1) 0 1px 0;
+     text-shadow: rgba(0,0,0,.4) 0 1px 0;
+     color: #ffffff;
+     font-size: 21px;
+     font-family: Georgia, serif;
+     text-decoration: none;
+     vertical-align: middle;
+   }
+   .button:hover {
+     border-top-color: #28597a;
+     background: #28597a;
+     color: #ccc;
+   }
+   .button:active {
+     border-top-color: #1b435e;
+     background: #1b435e;
+   }

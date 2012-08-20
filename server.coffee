@@ -61,8 +61,9 @@ OnLogin = (data) ->
   this.emit "loginSuccess",
     #ret     : 1
     userInfo: GetUserInfo(socketId)
+    roomList: getRoomList()
 
-  io.sockets.emit "roomList", roomList: getroomList()
+  io.sockets.emit "roomList", roomList: getRoomList()
 
 OnJoinRoom = (data) ->
   #data.roomId
@@ -72,14 +73,19 @@ OnJoinRoom = (data) ->
   player   = Connectors[socketId]
   player.roomId = roomId
 
-  room.addPerson(player)
+  position = room.addPerson(player)
 
-  this.emit "joinRoomSuccess",
-    "roomId"   : roomId
-    "userInfo" : userInfo
+  if position == -1
+    this.emit "joinRoomFailed"
+    return
+  else
+    this.emit "joinRoomSuccess",
+      roomId   : roomId
+      userInfo : GetUserInfo(socketId)
+      position : position
 
-  io.sockets.emit "roomList", roomList: getroomList()
-  room.reSendPersonList()
+  io.sockets.emit "roomList", roomList: getRoomList()
+  room.reFreshRoomStatus()
 
 OnLeaveRoom = (data) ->
   #null
@@ -99,6 +105,7 @@ OnReady = (data) ->
   room          = Rooms[player.roomId]
 
   room.playerReady(player)
+  room.reFreshRoomStatus()
 
 OnPutPiece = (data) ->
   #data.x
@@ -106,17 +113,29 @@ OnPutPiece = (data) ->
   socketId      = this.id
   player        = Connectors[socketId]
   room          = Rooms[player.roomId]
+  return unless player.position == room.turn
+  return unless room.game.gameMap[data.x][data.y] == 0
 
-  room.game.putPiece(data.x, data.y, player.position)
-
-getroomList = ->
+  room.game.gameMap[data.x][data.y] = player.position
+  if room.game.win player.position
+    room.noticeEveryOne "putPiece", x:data.x, y:data.y, position:player.position
+    room.noticeEveryOne "gameOver", winner:player.nickname
+    room.turn = 0
+    room.status = 0
+    room.player_1.status = 0
+    room.player_2.status = 0
+    io.sockets.emit "roomList", roomList: getRoomList()
+  else
+    room.turn = 3 - room.turn
+    room.noticeEveryOne "putPiece", x:data.x, y:data.y, position:player.position
+getRoomList = ->
   list = []
 
   for room in Rooms
-    list.push id: room.index, players: room.players()
+    list.push id: room.id, status: room.status
   list
 
-initRooms = ->
+initRooms = (io) ->
   for i in [0...5] #  0 <= i < roomMax
     Rooms[i] = new Room(i)
 
