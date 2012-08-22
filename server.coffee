@@ -173,13 +173,8 @@ Disconnect = ->
   roomStatusBeforeRemove = room.status
   position = room.removePerson(player)
   if room.status == 0 && roomStatusBeforeRemove == 1
-    winner = null
-    if position == 1
-      winner = room.player_2
-    else
-      winner = room.player_1
-    winner.socket.emit 'resetFunctions'
-    room.noticeEveryOne "gameOver", winner:winner.nickname, reason: "#{player.nickname} Exit!"
+    room.noticeTwoPlayer 'resetFunctions', null
+    room.noticeEveryOne "gameOver", reason: "#{player.nickname} Exit!"
 
   io.sockets.emit "roomList", roomList: getRoomList()
   room.reFreshRoomStatus()

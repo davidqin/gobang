@@ -63,6 +63,10 @@ class Room
     return false unless @player_2 && @player_1
     @player_2.status == 1 && @player_1.status == 1
 
+  noticeTwoPlayer: (actionName,json) ->
+    @player_1.socket.emit actionName, json if @player_1
+    @player_2.socket.emit actionName, json if @player_2
+
   noticeEveryOne: (actionName,json) ->
     @player_1.socket.emit actionName, json if @player_1
     @player_2.socket.emit actionName, json if @player_2
