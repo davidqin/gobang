@@ -19,9 +19,10 @@ class Room
       if player == @player_2
         @player_2 = null
 
+      position = player.position
       player.resetInfo()
       @gameOver()
-      return player.position
+      return position
     else
       if player == @player_1
         @player_1 = null

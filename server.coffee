@@ -48,13 +48,12 @@ OnLogin = (data) ->
   socketId = this.id
   player = new Player(data.nickname,    this,      0,     -1,       -1)
                     #(      nickname, socket, status, roomId, position)
-  #更新客户端链接
+
   Connectors[socketId] = player
   ClientsCount++
 
-  #登陆成功
+
   this.emit "loginSuccess",
-    #ret     : 1
     userInfo: GetUserInfo(socketId)
     roomList: getRoomList()
 
