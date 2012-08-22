@@ -13,4 +13,10 @@ class Player
     "roomId"   : @roomId
     "position" : @position
 
+  resetInfo: ->
+    @status   = 0
+    @status   = -1
+    @position = 0
+    null
+
 exports.Player = Player

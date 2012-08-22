@@ -3,29 +3,50 @@
 
 class Room
   constructor: (id) ->
-    @id       = id
-    @turn     = 1
-    @status   = 0
-    @player_1 = null
-    @player_2 = null
-    @game     = null
+    @id        = id
+    @turn      = 0
+    @status    = 0
+    @player_1  = null
+    @player_2  = null
+    @game      = null
     @watchers  = []
 
-  removePerson: (watcher) ->
+  removePerson: (player) ->
+    if @status == 1
+      if player == @player_1
+        @player_1 = null
+
+      if player == @player_2
+        @player_2 = null
+
+      player.resetInfo()
+      @gameOver()
+      return player.position
+    else
+      if player == @player_1
+        @player_1 = null
+        player.resetInfo()
+        return 1
+
+      if player == @player_2
+        @player_2 = null
+        player.resetInfo()
+        return 2
 
   playerReady: (player) ->
     player.status = 1
     player.socket.emit "readySuccess"
 
   roomStatus: ->
-    p1_n = null
-    p1_n = @player_1.nickname if @player_1
-    p2_n = null
-    p2_n = @player_2.nickname if @player_2
-    p1_s = null
-    p1_s = @player_1.status   if @player_1
-    p2_s = null
-    p2_s = @player_2.status   if @player_2
+    p1_n = p2_n = p1_s = p2_s = null
+
+    if @player_1
+      p1_n = @player_1.nickname
+      p1_s = @player_1.status
+    if @player_2
+      p2_n = @player_2.nickname
+      p2_s = @player_2.status
+
     status =
       p1_name   : p1_n
       p2_name   : p2_n
@@ -38,6 +59,7 @@ class Room
     @noticeEveryOne "roomStatus", @roomStatus()
 
   gameReady: ->
+    return false unless @player_2 && @player_1
     @player_2.status == 1 && @player_1.status == 1
 
   noticeEveryOne: (actionName,json) ->
@@ -77,26 +99,22 @@ class Room
     i++ if @player_2 != null
     i
 
-  removePlayer: (playerId) ->
-    player = null
-    if playerId == '1'
-      player       = @player_1
-      @player_1    = @player_2
-      @player_1.id = 1
-      @player_2    = null
-    else
-      player = @player_2
-      @player_2 = null
-    player
-
-  checkOut: (playerId) ->
-    player = @removePlayer playerId
-    player.socket.emit "checkOut", date: "success"
-
   gameStart: ->
     @turn     = 1
     @status   = 1
     @game     = new Game
     @noticeEveryOne 'gameStart'
+
+  gameOver: ->
+    @turn            = 0
+    @status          = 0
+    @player_1.status = 0 if @player_1
+    @player_2.status = 0 if @player_2
+
+  changeTurn: ->
+    @turn = 3 - @turn
+
+  putPiece: (position, x, y)->
+    @game.gameMap[x][y] = position
 
 exports.Room = Room

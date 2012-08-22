@@ -156,7 +156,10 @@ textarea {
 }
 
 body {
-  margin: 0;
+  max-width: 760px;
+  background: url("/images/back-ground.png") repeat fixed 0 0;
+  margin-left:auto;
+  margin-right:auto;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 13px;
   line-height: 18px;

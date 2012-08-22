@@ -104,7 +104,8 @@ OnReady = (data) ->
 
   if room.gameReady()
     room.gameStart()
-    io.sockets.emit "roomList", roomList: getRoomList()
+    io.sockets.emit "roomList",   roomList: getRoomList()
+    room.noticeEveryOne "noticeTurn", turn: room.turn
 
 OnPutPiece = (data) ->
   #data.x
@@ -115,18 +116,19 @@ OnPutPiece = (data) ->
   return unless player.position == room.turn
   return unless room.game.gameMap[data.x][data.y] == 0
 
-  room.game.gameMap[data.x][data.y] = player.position
+  room.putPiece(player.position, data.x, data.y)
+
   if room.game.win player.position
+    room.gameOver()
     room.noticeEveryOne "putPiece", x:data.x, y:data.y, position:player.position
-    room.noticeEveryOne "gameOver", winner:player.nickname
-    room.turn = 0
-    room.status = 0
-    room.player_1.status = 0
-    room.player_2.status = 0
+    room.noticeEveryOne "gameOver", winner:player.nickname, reason: null
+    room.player_1.socket.emit 'resetFunctions'
+    room.player_2.socket.emit 'resetFunctions'
     io.sockets.emit "roomList", roomList: getRoomList()
   else
-    room.turn = 3 - room.turn
+    room.changeTurn()
     room.noticeEveryOne "putPiece", x:data.x, y:data.y, position:player.position
+    room.noticeEveryOne "noticeTurn", turn: room.turn
 
 getRoomList = ->
   list = []
@@ -139,15 +141,63 @@ initRooms = (io) ->
   for i in [0...5] #  0 <= i < roomMax
     Rooms[i] = new Room(i)
 
+OnExitRoom = (data) ->
+  #null
+  socketId      = this.id
+  player        = Connectors[socketId]
+  room          = Rooms[player.roomId]
+
+  roomStatusBeforeRemove = room.status
+  position = room.removePerson(player)
+  if room.status == 0 && roomStatusBeforeRemove == 1
+    winner = null
+    if position == 1
+      winner = room.player_2
+    else
+      winner = room.player_1
+    winner.socket.emit 'resetFunctions'
+    room.noticeEveryOne "gameOver", winner:winner.nickname, reason: "#{player.nickname} Exit!"
+
+  io.sockets.emit "roomList", roomList: getRoomList()
+  room.reFreshRoomStatus()
+
+  player.socket.emit "exitRoomSuccess"
+
+Disconnect = ->
+  console.log  "sdfsdfsdfsdfsdfsdfsdfsf"
+  socketId      = this.id
+  player        = Connectors[socketId]
+  return unless player
+  room          = Rooms[player.roomId]
+  return unless room
+
+  roomStatusBeforeRemove = room.status
+  position = room.removePerson(player)
+  if room.status == 0 && roomStatusBeforeRemove == 1
+    winner = null
+    if position == 1
+      winner = room.player_2
+    else
+      winner = room.player_1
+    winner.socket.emit 'resetFunctions'
+    room.noticeEveryOne "gameOver", winner:winner.nickname, reason: "#{player.nickname} Exit!"
+
+  io.sockets.emit "roomList", roomList: getRoomList()
+  room.reFreshRoomStatus()
+
+
 startServer = ->
   initRooms()
   io = require('socket.io').listen server
   io.sockets.on 'connection', (socket) ->
 
-    socket.on "OnLogin",     OnLogin
-    socket.on "OnJoinRoom",  OnJoinRoom
-    socket.on "OnLeaveRoom", OnLeaveRoom
-    socket.on "OnReady",     OnReady
-    socket.on "OnPutPiece",  OnPutPiece
+    socket.on "OnLeaveRoom",      OnLeaveRoom
+    socket.on "LoginRequest",     OnLogin
+    socket.on "JoinRoomRequest",  OnJoinRoom
+    socket.on "ExitRoomRequest",  OnExitRoom
+    socket.on "ReadyRequest",     OnReady
+    socket.on "PutPieceRequest",  OnPutPiece
+
+    socket.on "disconnect",       Disconnect
 
 startServer()

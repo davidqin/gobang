@@ -1,12 +1,29 @@
 extends layout
 block content
   script(type="text/coffeescript", src='/javascripts/index.coffee')
+  div(class="navbar navbar-inverse")
+    div(class="navbar-inner")
+      div(class="container")
+        a(class="brand",href="#") Gobang
+        div(class="nav-collapse subnav-collapse")
+          ul(class="nav")
+            li
+              a(href="#") Home
+            li
+              a(href="#") Link
+            li
+              a(href="#") Link
+          ul(class="nav pull-right")
+            li(class="divider-vertical")
+            li
+              a(href="#") Link
   div(class="container-fluid")
     div(class="row-fluid")
-      div(class="span3")
-        div(id="player_1") asdfasdfasdf
-        div(id="player_2") asdfasdfsadf
-      div(class="span9")
+      div(class="span3",id="left")
+        div(id="players")
+        div(id="watchers")
+        div(id="functions")
+      div(class="span9",id="right")
         div(id="notice")
         div(id="roomList")
         div(id="gamePool")
@@ -15,5 +32,3 @@ block content
           h3 Nickname:
           input(type="text",maxlength="10",id="nickname")
           button(id="loginBtn",class="btn btn-success") Join
-      div(id="ready")
-        button(class="button") READY
