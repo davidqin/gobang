@@ -26,7 +26,7 @@ $(document).ready ->
     initOnAction(socket)
     nickname = $("#nickname").val()
     if !nickname
-      alert("请输入昵称")
+      alert("Enter your name please")
       $("#nickname").val('').focus()
       return
     socket.emit 'LoginRequest', nickname: nickname
